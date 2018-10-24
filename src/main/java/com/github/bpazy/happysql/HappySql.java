@@ -2,22 +2,35 @@ package com.github.bpazy.happysql;
 
 import lombok.SneakyThrows;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
+import java.util.List;
+
+import static com.github.bpazy.happysql.MysqlConfig.getDriverClassName;
 
 public class HappySql {
-    private final static String driver = "com.mysql.jdbc.Driver";
+    private Class returnType;
+    private int maxSize;
 
     @SneakyThrows
-    public static void main(String[] args) {
-        Class.forName(driver);
-
-        Connection conn = getConnection();
-        conn.prepareStatement()
+    public HappySql() {
+        Class.forName(getDriverClassName());
     }
 
+    public HappySql returnType(Class returnType) {
+        this.returnType = returnType;
+        return this;
+    }
+
+    public HappySql limit(int maxSize) {
+        this.maxSize = maxSize;
+        return this;
+    }
+
+    @SuppressWarnings("unchecked")
     @SneakyThrows
-    private static Connection getConnection() {
-        return DriverManager.getConnection("db4free.net", "ziyuan", "1");
+    public <T> T execute(String sql) {
+        InputContext inputContext = new InputContext(new SqlContext(), returnType, sql);
+        ResultContext resultContext = inputContext.execute();
+        List retList = resultContext.getRetList();
+        return maxSize == 1 ? (T) retList.get(0) : (T) retList;
     }
 }
